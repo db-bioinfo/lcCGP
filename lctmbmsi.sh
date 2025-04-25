@@ -151,10 +151,8 @@ Rscript $PURECN_PATH_PURECN --out ${sample}_TumorPurity \
 
 # Calculate Effective Genome size and Average coverage
 
-# Run mosdepth without coverage threshold to get true average
+# Calculate average coverage first
 conda run -n MOSDEPTH mosdepth -t 32 -n -b $TARGET_BED ${sample} ${sample}_aligned_marked_bqsr.bam
-
-DENOMINATOR=$(zcat ${sample}.regions.bed.gz | awk '$5 > 50 {sum += $3-$2} END {print sum}')
 
 # Calculate average coverage from the output
 AVERAGE_COVERAGE=$(zcat ${sample}.regions.bed.gz | \
@@ -167,6 +165,16 @@ END {
    if(total_length>0)
        print sum/total_length
 }')
+
+# Set the coverage threshold based on AVERAGE_COVERAGE
+if (( $(echo "$AVERAGE_COVERAGE < 100" | bc -l) )); then
+    COVERAGE_THRESHOLD=20
+else
+    COVERAGE_THRESHOLD=50
+fi
+
+# Calculate DENOMINATOR using the appropriate threshold
+DENOMINATOR=$(zcat ${sample}.regions.bed.gz | awk -v threshold="$COVERAGE_THRESHOLD" '$5 > threshold {sum += $3-$2} END {print sum}')
 
 # Set mindepth to 30% of average score
 MINDEPTH=$(echo "($AVERAGE_COVERAGE * 0.3)" | bc | cut -d'.' -f1)
