@@ -49,7 +49,7 @@ process_sample() {
 #-------------------------- MSI ---------------------------#
 
 # Extract only msi target regions
-samtools view -@ $THREADS -b -h ${sample}_aligned_marked.bam -L $TARGET_BED > ${sample}_msi_regions.bam
+samtools view -@ $THREADS -b -h ${sample}_aligned_marked_bqsr.bam -L $TARGET_BED > ${sample}_msi_regions.bam
 samtools index ${sample}_msi_regions.bam
 
 # Calculate average coverage in target regions and save to file
